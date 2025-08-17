@@ -1,25 +1,3 @@
-using Cascadia
-using Dates
-using DataFrames
-using HTTP
-using Gumbo
-using StringEncodings
-
-
-function ativos()
-    headers = ["User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"]
-    url = "https://www.fundamentus.com.br/detalhes.php"
-    html = get_html_from_url(url=url, encoding="ISO-8859-1")# |> parsehtml
-    parsed = html |> parsehtml
-    tables = eachmatch(Selector("h1"), parsed.root)
-    #println(html[1:20_000])
-    println(length(tables))
-    open("file.html", "w") do file
-        write(file, html)
-    end
-end
-
-
 function fii_fatos_relevantes(ticker::T) where {T <: AbstractString}
     url = "https://www.fundamentus.com.br/fii_fatos_relevantes.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
@@ -114,7 +92,7 @@ function fii_relatorios(ticker::AbstractString)# :: DataFrame where {T <: Abstra
         push!(
             data,
             Dict(
-                "data" => DateTime(replace(values[1], r"\s+" => " "), dateformat"mm/yyyy"),
+                "data" => Date(replace(values[1], r"\s+" => " "), dateformat"mm/yyyy"),
                 "download_link" => first(eachmatch(Selector("a"), tds[2])).attributes["href"],
             )
         )
@@ -146,7 +124,7 @@ end
 function fii_proventos(ticker::T) :: DataFrame where {T <: AbstractString}
     url = "https://www.fundamentus.com.br/fii_proventos.php?papel=$ticker&tipo=2"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
-    rows = eachmatch(Selector("table#resultado tbody tr"), parsed.root)
+    rows = eachmatch(Selector("tbody tr"), parsed.root)
     data = []
 
     for row in rows
@@ -158,52 +136,6 @@ function fii_proventos(ticker::T) :: DataFrame where {T <: AbstractString}
                 "tipo" => values[2],
                 "data-pag" => Date(values[3], dateformat"dd/mm/yyyy"),
                 "valor" => sanitize_float(values[4]),
-            )
-        )
-    end
-    return DataFrame(data)
-end
-
-
-function acao_proventos(ticker::T) :: DataFrame where {T <: AbstractString}
-    url = "https://www.fundamentus.com.br/proventos.php?papel=$ticker"
-    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
-    rows = eachmatch(Selector("table#resultado tbody tr"), parsed.root)
-
-    data = []
-
-    for row in rows
-        values = string.([text(td) for td in eachmatch(Selector("td"), row)])
-        push!(
-            data,
-            Dict(
-                "data-com" => Date(values[1], dateformat"dd/mm/yyyy"),
-                "valor" => values[2] |> sanitize_float,
-                "tipo" => values[3],
-                "data-pag" => values[4] != "-" ? Date(values[4], dateformat"dd/mm/yyyy") : missing,
-            )
-        )
-    end
-    return DataFrame(data)
-end
-
-
-function acao_apresentacoes(ticker::T) where {T <: AbstractString}
-    url = "https://www.fundamentus.com.br/apresentacoes.php?papel=$ticker"
-    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
-    rows = eachmatch(Selector("tbody tr"), parsed.root)
-
-    data = []
-
-    for row in rows
-        tds = eachmatch(Selector("td"), row)
-        values = string.([text(td) for td in tds])
-        push!(
-            data,
-            Dict(
-                "data" => DateTime(replace(values[1], r"\s+" => " "), dateformat"dd/mm/yyyy HH:MM"),
-                "descricao" => values[2],
-                "download_link" => first(eachmatch(Selector("a"), tds[end])).attributes["href"],
             )
         )
     end
