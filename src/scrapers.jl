@@ -43,7 +43,7 @@ function fii_fatos_relevantes(ticker::T) where {T <: AbstractString}
 end
 
 
-function fii_imoveis()
+function fiis_imoveis()
     url = "https://www.fundamentus.com.br/fii_imoveis.php"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
@@ -65,13 +65,62 @@ function fii_imoveis()
     end
     return DataFrame(data)
 end
-function fii_imoveis(tickers::Vector{<:AbstractString}) where {T <: AbstractString}
-    return filter(r -> r["fii"] in tickers, fii_imoveis())
+function fiis_imoveis(tickers::Vector{<:AbstractString}) where {T <: AbstractString}
+    return filter(r -> r["fii"] in tickers, fiis_imoveis())
 end
-function fii_imoveis(ticker::T) where {T <: AbstractString}
-    return fii_imoveis([ticker])
+function fiis_imoveis(ticker::T) where {T <: AbstractString}
+    return fiis_imoveis([ticker])
 end
 
+
+function fii_imoveis(ticker::T) where {T <: AbstractString}
+    url = "https://www.fundamentus.com.br/fii_imoveis_detalhes.php?papel=$ticker"
+    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
+    rows = eachmatch(Selector("tbody tr"), parsed.root)
+
+    data = []
+
+    for row in rows
+        tds = eachmatch(Selector("td"), row)
+        values = string.([text(td) for td in tds])
+        push!(
+            data,
+            Dict(
+                "imovel" => values[1],
+                "endereco" => values[2],
+                "area" => values[3],
+                "n_unidades" => values[4],
+                "caracteristicas" => values[5],
+                "tx_ocupacao" => values[6],
+                "%_inadimplencia" => values[7],
+                "%_receita" => values[8],
+            )
+        )
+    end
+    return DataFrame(data)
+end
+
+
+function fii_relatorios(ticker::AbstractString)# :: DataFrame where {T <: AbstractString}
+    url = "https://www.fundamentus.com.br/fii_relatorios.php?papel=$ticker"
+    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
+    rows = eachmatch(Selector("tbody tr"), parsed.root)
+
+    data = []
+
+    for row in rows
+        tds = eachmatch(Selector("td"), row)
+        values = string.([text(td) for td in tds])
+        push!(
+            data,
+            Dict(
+                "data" => DateTime(replace(values[1], r"\s+" => " "), dateformat"mm/yyyy"),
+                "download_link" => first(eachmatch(Selector("a"), tds[2])).attributes["href"],
+            )
+        )
+    end
+    return DataFrame(data)
+end
 
 
 function fii_administrador(ticker::T) :: DataFrame where {T <: AbstractString}
