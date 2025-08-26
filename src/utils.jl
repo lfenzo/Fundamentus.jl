@@ -1,6 +1,13 @@
-function sanitize_float(s::T) :: Float64 where {T <: AbstractString}
-    return parse(Float64, replace(s, "." => "", "," => "."))  # "1.000,00" -> 1000.00
+function sanitize_float(s::AbstractString; as_percentage::Bool = false) :: Float64
+    parsed = parse(Float64, _sanitize_number_string(s))
+    return as_percentage ? parsed / 100 : parsed
 end
+
+function sanitize_int(s::AbstractString) :: Int
+    return parse(Int, _sanitize_number_string(s))
+end
+
+_sanitize_number_string(s::AbstractString) = replace(s, "." => "", "," => ".", "%" => "")
 
 
 """

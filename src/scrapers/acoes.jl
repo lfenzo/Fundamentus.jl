@@ -1,4 +1,37 @@
-function acao_proventos(ticker::T) :: DataFrame where {T <: AbstractString}
+"""
+    acao_proventos(ticker::AbstractString) :: DataFrame
+
+Retrieve the dividends and distributions paid by a Brazilian stock (ação) with the given ticker.
+
+# Parameters
+- `ticker::AbstractString` : The stock ticker symbol, e.g., `"PETR4"`.
+
+# Returns
+`DataFrame` with the following columns:
+- `data_com` (`Date`): Ex-dividend date (the date when the right to receive the dividend is determined).
+- `valor` (`Float64`): Amount paid per share.
+- `tipo` (`String`): Type of distribution (e.g., "Dividend", "Interest on Capital").
+- `data_pag` (`Union{Date, Missing}`): Payment date when the dividend is actually credited. `missing` if not available.
+
+# Example
+
+```@repl
+julia> acao_proventos("PETR4")
+115×4 DataFrame
+ Row │ data_com    valor    tipo             data_pag   
+     │ Date        Float64  String           Date?      
+─────┼──────────────────────────────────────────────────
+   1 │ 2025-06-02   0.4546  JRS CAP PROPRIO  2025-08-20
+   2 │ 2025-06-02   0.3084  DIVIDENDO        2025-09-22
+   3 │ 2025-06-02   0.1461  JRS CAP PROPRIO  2025-09-22
+   4 │ 2025-04-16   0.3548  DIVIDENDO        2025-06-20
+   5 │ 2025-04-16   0.3548  DIVIDENDO        2025-05-20
+...
+```
+
+See also [`fii_proventos()`](@ref).
+"""
+function acao_proventos(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/proventos.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("table#resultado tbody tr"), parsed.root)
@@ -21,7 +54,36 @@ function acao_proventos(ticker::T) :: DataFrame where {T <: AbstractString}
 end
 
 
-function acao_apresentacoes(ticker::T) where {T <: AbstractString}
+"""
+    acao_apresentacoes(ticker::AbstractString) :: DataFrame
+
+Retrieve the investor presentations disclosed by a Brazilian stock (ação) with the given ticker.
+
+# Parameters
+- `ticker::AbstractString` : The stock ticker symbol, e.g., `"PETR4"`.
+
+# Returns
+`DataFrame` with the following columns:
+- `data` (`DateTime`): Date and time when the presentation was published.
+- `descr` (`String`): Description or title of the presentation.
+- `download_link` (`String`): URL to download the presentation file.
+
+# Example
+```@repl
+julia> acao_apresentacoes("PETR4")
+115×3 DataFrame
+ Row │ download_link                      data                 descr                             
+     │ String                             DateTime             String                            
+─────┼───────────────────────────────────────────────────────────────────────────────────────────
+   1 │ https://www.rad.cvm.gov.br/ENET/…  2025-08-07T21:47:00  Desempenho Petrobras 2T25
+   2 │ https://www.rad.cvm.gov.br/ENET/…  2025-05-13T06:03:00  Desempenho Petrobras 1T25
+   3 │ https://www.rad.cvm.gov.br/ENET/…  2025-05-06T16:22:00  Carteira de Investimentos e Opor…
+   4 │ https://www.rad.cvm.gov.br/ENET/…  2025-02-26T20:32:00  Desempenho Petrobras em 2024
+   5 │ https://www.rad.cvm.gov.br/ENET/…  2024-11-22T19:24:00  Plano Estratégico 2050 - Plano d…
+...
+```
+"""
+function acao_apresentacoes(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/apresentacoes.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
@@ -35,7 +97,7 @@ function acao_apresentacoes(ticker::T) where {T <: AbstractString}
             data,
             Dict(
                 "data" => DateTime(replace(values[1], r"\s+" => " "), dateformat"dd/mm/yyyy HH:MM"),
-                "descricao" => values[2],
+                "descr" => values[2],
                 "download_link" => first(eachmatch(Selector("a"), tds[end])).attributes["href"],
             )
         )
@@ -44,7 +106,39 @@ function acao_apresentacoes(ticker::T) where {T <: AbstractString}
 end
 
 
-function acao_recompras(ticker::T) where {T <: AbstractString}
+"""
+    acao_recompras(ticker::AbstractString) :: DataFrame
+
+Retrieve the share buyback events for a Brazilian stock (ação) with the given ticker.
+
+# Parameters
+- `ticker::AbstractString` : The stock ticker symbol, e.g., `"PETR4"`.
+
+# Returns
+`DataFrame` with the following columns:
+- `data` (`Date`): Date when the buyback operation occurred.
+- `quantidade` (`Float64`): Number of shares repurchased.
+- `valor` (`Float64`): Total value of the buyback operation.
+- `preco_medio` (`String`): Average price per share for the buyback.
+- `%_do_capital` (`String`): Percentage of the company's capital represented by the buyback.
+- `download_link` (`String`): URL to the official document or report regarding the buyback.
+
+# Example
+```@repl
+julia> acao_recompras("PETR4")
+37×6 DataFrame
+ Row │ download_link                      valor      %_do_capital  data        quantidade      preco_medio 
+     │ String                             Float64    String        Date        Float64         String      
+─────┼─────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ https://www.rad.cvm.gov.br/ENET/…  0.0        -             2025-07-01       0.0        0,00
+   2 │ https://www.rad.cvm.gov.br/ENET/…  0.0        -             2024-07-01       0.0        0,00
+   3 │ https://www.rad.cvm.gov.br/ENET/…  2.72934e8  0,05%         2024-06-01       7.1594e6   38,12
+   4 │ https://www.rad.cvm.gov.br/ENET/…  4.84823e8  0,10%         2024-05-01       1.30125e7  37,26
+   5 │ https://www.rad.cvm.gov.br/ENET/…  1.42776e7  0,00%         2024-04-01  383000.0        37,28
+...
+```
+"""
+function acao_recompras(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/recompras.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)

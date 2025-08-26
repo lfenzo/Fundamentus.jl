@@ -10,6 +10,7 @@ using StringEncodings
 include("./utils.jl")
 include("./scrapers/acoes.jl")
 include("./scrapers/fiis.jl")
+include("./scrapers/misc.jl")
 
 export ativos
 
@@ -19,11 +20,13 @@ export fii_relatorios
 export fii_imoveis
 export fii_proventos
 export fii_detalhes
+export fiis
 export fiis_imoveis
 
 export acao_proventos
 export acao_apresentacoes
 export acao_recompras
+export acoes
 
 CACHE = Dict()
 
