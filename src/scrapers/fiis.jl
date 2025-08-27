@@ -27,6 +27,8 @@ julia> fii_fatos_relevantes("HGLG11")
    5 │ https://fnet.bmfbovespa.com.br/f…  Fato Relevante  2024-10-29T18:05:00
 ...
 ```
+
+See also [`acao_apresentacoes()`](@ref).
 """
 function fii_fatos_relevantes(ticker::T) where {T <: AbstractString}
     url = "https://www.fundamentus.com.br/fii_fatos_relevantes.php?papel=$ticker"

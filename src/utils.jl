@@ -1,13 +1,31 @@
+_sanitize_number_string(s::AbstractString) = replace(s, "." => "", "," => ".", "%" => "")
+_sanitize_date_string(s::AbstractString) = replace(s, r"\s+" => " ")
+
 function sanitize_float(s::AbstractString; as_percentage::Bool = false) :: Float64
     parsed = parse(Float64, _sanitize_number_string(s))
     return as_percentage ? parsed / 100 : parsed
 end
 
+
 function sanitize_int(s::AbstractString) :: Int
     return parse(Int, _sanitize_number_string(s))
 end
 
-_sanitize_number_string(s::AbstractString) = replace(s, "." => "", "," => ".", "%" => "")
+
+function _parse_date(s::AbstractString; format::DateFormat = dateformat"dd/mm/yyyy") :: Date
+    return Date(_sanitize_date_string(s), format)
+end
+
+
+function _parse_date_time(s::AbstractString; format::DateFormat = dateformat"dd/mm/yyyy HH:MM") :: DateTime
+    return DateTime(_sanitize_date_string(s), format)
+end
+
+
+function _extract_link_from_attributes(node::Gumbo.HTMLNode) :: Union{Missing, AbstractString}
+    match = eachmatch(Selector("a"), node)
+    return isempty(match) ? missing : only(match).attributes["href"]
+end
 
 
 """

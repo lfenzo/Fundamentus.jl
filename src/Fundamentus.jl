@@ -26,6 +26,7 @@ export fiis_imoveis
 export acao_proventos
 export acao_apresentacoes
 export acao_recompras
+export acao_resultados
 export acoes
 
 CACHE = Dict()

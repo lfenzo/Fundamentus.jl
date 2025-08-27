@@ -1,3 +1,26 @@
+function acao_resultados(ticker::AbstractString)
+    url = "https://www.fundamentus.com.br/resultados_trimestrais.php?papel=$ticker"
+    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
+    rows = eachmatch(Selector("tbody tr"), parsed.root)
+
+    data = []
+
+    for row in rows
+        tds = eachmatch(Selector("td"), row)
+        values = string.([text(td) for td in tds])
+        push!(
+            data,
+            Dict(
+                "data" => _parse_date((values[1])),
+                "url_demonstracao" => _extract_link_from_attributes(tds[2]),
+                "url_release" => _extract_link_from_attributes(tds[3]),
+            )
+        )
+    end
+    return DataFrame(data)
+end
+
+
 """
     acao_proventos(ticker::AbstractString) :: DataFrame
 
@@ -43,10 +66,10 @@ function acao_proventos(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data-com" => Date(values[1], dateformat"dd/mm/yyyy"),
-                "valor" => values[2] |> sanitize_float,
+                "data-com" => _parse_date(values[1]),
+                "valor" => sanitize_int(values[2]),
                 "tipo" => values[3],
-                "data-pag" => values[4] != "-" ? Date(values[4], dateformat"dd/mm/yyyy") : missing,
+                "data-pag" => values[4] != "-" ? _parse_date((values[4])) : missing,
             )
         )
     end
@@ -82,6 +105,8 @@ julia> acao_apresentacoes("PETR4")
    5 │ https://www.rad.cvm.gov.br/ENET/…  2024-11-22T19:24:00  Plano Estratégico 2050 - Plano d…
 ...
 ```
+
+See also [`fii_fatos_relevantes()`](@ref)
 """
 function acao_apresentacoes(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/apresentacoes.php?papel=$ticker"
@@ -96,9 +121,9 @@ function acao_apresentacoes(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data" => DateTime(replace(values[1], r"\s+" => " "), dateformat"dd/mm/yyyy HH:MM"),
+                "data" => _parse_date_time(values[1]),
                 "descr" => values[2],
-                "download_link" => first(eachmatch(Selector("a"), tds[end])).attributes["href"],
+                "download_link" => _extract_link_from_attributes(tds[end]),
             )
         )
     end
@@ -151,12 +176,12 @@ function acao_recompras(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data" => Date(replace(values[1], r"\s+" => " "), dateformat"dd/mm/yyyy"),
+                "data" => _parse_date(values[1]),
                 "quantidade" => sanitize_float(values[2]),
                 "valor" => sanitize_float(values[3]),
                 "preco_medio" => values[4],
                 "%_do_capital" => values[5],
-                "download_link" => first(eachmatch(Selector("a"), tds[6])).attributes["href"],
+                "download_link" => _extract_link_from_attributes(tds[6]),
             )
         )
     end
