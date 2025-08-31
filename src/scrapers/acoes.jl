@@ -1,4 +1,18 @@
-function acao_resultados(ticker::AbstractString)
+"""
+    acao_resultados(ticker::AbstractString) :: DataFrame
+
+Fetches the quarterly results of a stock from the **Fundamentus** website.
+
+# Arguments
+- `ticker::AbstractString`: The stock trading code (e.g., `"PETR4"`, `"VALE3"`).
+
+# Returns
+`DataFrame` with the quarterly results of the stock, containing:
+- `data::Date`: Reference date of the quarterly result.
+- `url_demonstracao::Union{String, Missing}`: Link to the financial statement, if available.
+- `url_release::Union{String, Missing}`: Link to the results press release, if available.
+"""
+function acao_resultados(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/resultados_trimestrais.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
@@ -153,13 +167,13 @@ Retrieve the share buyback events for a Brazilian stock (ação) with the given 
 julia> acao_recompras("PETR4")
 37×6 DataFrame
  Row │ download_link                      valor      %_do_capital  data        quantidade      preco_medio 
-     │ String                             Float64    String        Date        Float64         String      
+     │ String                             Float64    String?       Date        Float64         String      
 ─────┼─────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 │ https://www.rad.cvm.gov.br/ENET/…  0.0        -             2025-07-01       0.0        0,00
-   2 │ https://www.rad.cvm.gov.br/ENET/…  0.0        -             2024-07-01       0.0        0,00
-   3 │ https://www.rad.cvm.gov.br/ENET/…  2.72934e8  0,05%         2024-06-01       7.1594e6   38,12
-   4 │ https://www.rad.cvm.gov.br/ENET/…  4.84823e8  0,10%         2024-05-01       1.30125e7  37,26
-   5 │ https://www.rad.cvm.gov.br/ENET/…  1.42776e7  0,00%         2024-04-01  383000.0        37,28
+   1 │ https://www.rad.cvm.gov.br/ENET/…  0.0        missing       2024-09-01       0.0        0,00
+   2 │ https://www.rad.cvm.gov.br/ENET/…  0.0        missing       2024-08-01       0.0        0,00
+   3 │ https://www.rad.cvm.gov.br/ENET/…  0.0        missing       2024-07-01       0.0        0,00
+   4 │ https://www.rad.cvm.gov.br/ENET/…  2.72934e8        0.0005  2024-06-01       7.1594e6   38,12
+   5 │ https://www.rad.cvm.gov.br/ENET/…  4.84823e8        0.001   2024-05-01       1.30125e7  37,26
 ...
 ```
 """
@@ -180,7 +194,7 @@ function acao_recompras(ticker::AbstractString) :: DataFrame
                 "quantidade" => sanitize_float(values[2]),
                 "valor" => sanitize_float(values[3]),
                 "preco_medio" => values[4],
-                "%_do_capital" => values[5],
+                "%_do_capital" => values[5] != "-" ? sanitize_float(values[5]; as_percentage = true) : missing,
                 "download_link" => _extract_link_from_attributes(tds[6]),
             )
         )

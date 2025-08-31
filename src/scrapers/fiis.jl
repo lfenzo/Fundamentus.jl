@@ -74,19 +74,17 @@ Retrieve detailed information about the real estate properties held by a Brazili
 
 # Example
 ```@repl
-using Fundamentus # hide
-df = fii_imoveis("HGLG11")
-first(df, 5)
+7×8 DataFrame
+ Row │ endereco                           n_unidades  %_inadimplencia  %_receita  area    %_ocupacao  caracteristicas  imovel                            
+     │ String                             Int64       Float64          Float64    Int64   Float64     String           String                            
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ Avenida das Indústrias, s/n, CPI…           1           0.0        0.0957  132353      1.0     -                HGLG Vinhedo
+   2 │ Avenida Piracema, nº 155, quadra…           1           0.0        0.0812   90484      1.0     -                DCB - Distribuition Center Barue…
+   3 │ Rodovia Anhanguera, km 31.775, C…           1           0.0        0.0653  102708      0.9405  -                DCC - Distribuition Center Cajam…
+   4 │ Av. Hélio Ossamu Daikuara, nº 1.…           1           0.0        0.0503   77587      0.8997  -                DCR - Distribuition Center Rodoa…
+   5 │ Estrada Joaquim Bueno Neto, 9835…           1           0.0        0.0474   89976      1.0     -                HGLG Itupeva G200
+...
 ```
-
-```@example
-import Random # hide
-Random.seed!(1) # hide
-A = rand(3, 3)
-b = [1, 2, 3]
-A
-```
-
 """
 function fii_imoveis(ticker::T) where {T <: AbstractString}
     url = "https://www.fundamentus.com.br/fii_imoveis_detalhes.php?papel=$ticker"
@@ -214,8 +212,8 @@ function fii_administrador(ticker::AbstractString) :: DataFrame
 
     df.ticker .= ticker
     df.email .= decode_cfemail(email_hash)
-    df.tx_admin_pl = sanitize_float.(df.tx_admin_pl)
-    df.tx_admin_valor_mercado = sanitize_float.(df.tx_admin_valor_mercado)
+    df.tx_admin_pl = sanitize_float.(df.tx_admin_pl; as_percentage = true)
+    df.tx_admin_valor_mercado = sanitize_float.(df.tx_admin_valor_mercado; as_percentage = true)
 
     return df
 end

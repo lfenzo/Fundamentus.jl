@@ -1,5 +1,10 @@
+const _DEFAULT_DATE_FORMAT = dateformat"dd/mm/yyyy"
+const _DEFAULT_DATETIME_FORMAT = dateformat"dd/mm/yyyy HH:MM"
+
 _sanitize_number_string(s::AbstractString) = replace(s, "." => "", "," => ".", "%" => "")
-_sanitize_date_string(s::AbstractString) = replace(s, r"\s+" => " ")
+_sanitize_date_string(s::AbstractString) = replace(s, r"\s+" => " ") |> strip
+
+sanitize_int(s::AbstractString) = parse(Int, _sanitize_number_string(s))
 
 function sanitize_float(s::AbstractString; as_percentage::Bool = false) :: Float64
     parsed = parse(Float64, _sanitize_number_string(s))
@@ -7,17 +12,12 @@ function sanitize_float(s::AbstractString; as_percentage::Bool = false) :: Float
 end
 
 
-function sanitize_int(s::AbstractString) :: Int
-    return parse(Int, _sanitize_number_string(s))
-end
-
-
-function _parse_date(s::AbstractString; format::DateFormat = dateformat"dd/mm/yyyy") :: Date
+function _parse_date(s::AbstractString; format::DateFormat = _DEFAULT_DATE_FORMAT) :: Date
     return Date(_sanitize_date_string(s), format)
 end
 
 
-function _parse_date_time(s::AbstractString; format::DateFormat = dateformat"dd/mm/yyyy HH:MM") :: DateTime
+function _parse_date_time(s::AbstractString; format::DateFormat = _DEFAULT_DATETIME_FORMAT) :: DateTime
     return DateTime(_sanitize_date_string(s), format)
 end
 
@@ -29,7 +29,7 @@ end
 
 
 """
-    decode_cfemail(cfemail::AbstractString) -> String
+    decode_cfemail(cfemail::AbstractString) :: String
 
 Decodes a Cloudflare-protected email string (`data-cfemail`) back into its original email address.
 
@@ -49,14 +49,10 @@ The encoding works as follows:
 # Returns
 - The decoded email address as a `String`.
 """
-function decode_cfemail(cfemail::String) :: String
-    bytes = [parse(UInt8, cfemail[i:i + 1], base=16) for i in 1:2:length(cfemail) - 1]
-    key = bytes[1]
-    decoded_chars = Char[]
-    for b in bytes[2:end]
-        push!(decoded_chars, Char(b ⊻ key))
-    end
-    return join(decoded_chars)
+function decode_cfemail(cfemail::AbstractString) :: String
+    bytes = hex2bytes(cfemail)
+    key = first(bytes)
+    return String(Char.(bytes[2:end] .⊻ key))
 end
 
 
