@@ -80,10 +80,10 @@ function acao_proventos(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data-com" => _parse_date(values[1]),
-                "valor" => sanitize_int(values[2]),
+                "data_com" => _parse_date(values[1]),
+                "valor" => sanitize_float(values[2]),
                 "tipo" => values[3],
-                "data-pag" => values[4] != "-" ? _parse_date((values[4])) : missing,
+                "data_pag" => values[4] != "-" ? _parse_date((values[4])) : missing,
             )
         )
     end

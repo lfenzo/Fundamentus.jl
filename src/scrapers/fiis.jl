@@ -30,7 +30,7 @@ julia> fii_fatos_relevantes("HGLG11")
 
 See also [`acao_apresentacoes()`](@ref).
 """
-function fii_fatos_relevantes(ticker::T) where {T <: AbstractString}
+function fii_fatos_relevantes(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/fii_fatos_relevantes.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("table#comunicados tbody tr"), parsed.root)
@@ -43,9 +43,9 @@ function fii_fatos_relevantes(ticker::T) where {T <: AbstractString}
         push!(
             data,
             Dict(
-                "data" => DateTime(replace(values[1], r"\s+" => " "), dateformat"dd/mm/yyyy HH:MM"),
+                "data" => _parse_date_time(values[1]),
                 "tipo" => values[2],
-                "download_link" => first(eachmatch(Selector("a"), tds[end])).attributes["href"],
+                "download_link" => _extract_link_from_attributes(tds[end]),
             )
         )
     end
@@ -86,7 +86,7 @@ Retrieve detailed information about the real estate properties held by a Brazili
 ...
 ```
 """
-function fii_imoveis(ticker::T) where {T <: AbstractString}
+function fii_imoveis(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/fii_imoveis_detalhes.php?papel=$ticker"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
@@ -101,7 +101,7 @@ function fii_imoveis(ticker::T) where {T <: AbstractString}
             Dict(
                 "imovel" => values[1],
                 "endereco" => values[2],
-                "area" => sanitize_int(values[3]),
+                "area" => sanitize_float(values[3]),
                 "n_unidades" => sanitize_int(values[4]),
                 "caracteristicas" => values[5],
                 "%_ocupacao" => sanitize_float(values[6]; as_percentage = true),
@@ -155,8 +155,8 @@ function fii_relatorios(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data" => Date(replace(values[1], r"\s+" => " "), dateformat"mm/yyyy"),
-                "download_link" => first(eachmatch(Selector("a"), tds[2])).attributes["href"],
+                "data" => _parse_date(values[1], format = dateformat"mm/yyyy"),
+                "download_link" => _extract_link_from_attributes(tds[2]),
             )
         )
     end
@@ -268,9 +268,9 @@ function fii_proventos(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data_com" => Date(values[1], dateformat"dd/mm/yyyy"),
+                "data_com" => _parse_date(values[1]),
                 "tipo" => values[2],
-                "data_pag" => Date(values[3], dateformat"dd/mm/yyyy"),
+                "data_pag" => _parse_date(values[3]),
                 "valor" => sanitize_float(values[4]),
             )
         )

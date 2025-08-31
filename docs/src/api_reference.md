@@ -1,7 +1,3 @@
-```@setup main
-using Fundamentus
-```
-
 # Index
 
 
