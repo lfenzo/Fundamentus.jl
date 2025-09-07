@@ -1,4 +1,76 @@
 """
+    acoes() :: DataFrame
+
+Fetch fundamental indicators for all stocks listed on the Fundamentus website.
+
+# Returns
+`DataFrame` where each row corresponds to a stock, with the following columns:
+- `papel::String`: Trading code of the stock (ticker).
+- `name::String`: Full company name.
+- `cotacao::Union{Float64, Missing}`: Current price.
+- `p/l::Union{Float64, Missing}`: Price-to-Earnings ratio.
+- `p/vp::Union{Float64, Missing}`: Price-to-Book ratio.
+- `psr::Union{Float64, Missing}`: Price-to-Sales ratio.
+- `%_div_yield::Union{Float64, Missing}`: Dividend Yield (%).
+- `p/ativo::Union{Float64, Missing}`: Price-to-Assets ratio.
+- `p/cap.giro::Union{Float64, Missing}`: Price-to-Working Capital ratio.
+- `p/ebit::Union{Float64, Missing}`: Price-to-EBIT ratio.
+- `p/ativ.circ.liq::Union{Float64, Missing}`: Price-to-Net Current Assets ratio.
+- `ev/ebit::Union{Float64, Missing}`: Enterprise Value to EBIT ratio.
+- `ev/ebitda::Union{Float64, Missing}`: Enterprise Value to EBITDA ratio.
+- `marg_ebit::Union{Float64, Missing}`: EBIT margin (%).
+- `marg_liq::Union{Float64, Missing}`: Net margin (%).
+- `liq_corr::Union{Float64, Missing}`: Current ratio.
+- `roic::Union{Float64, Missing}`: Return on Invested Capital (%).
+- `roe::Union{Float64, Missing}`: Return on Equity (%).
+- `liq_2meses::Union{Float64, Missing}`: Average trading volume in the last 2 months.
+- `patrim_liq::Union{Float64, Missing}`: Shareholders' equity.
+- `div_liq/patrim::Union{Float64, Missing}`: Net Debt to Equity ratio.
+- `cresc_rec_5A::Union{Float64, Missing}`: Revenue growth in the last 5 years (%).
+"""
+function acoes()
+    url = "https://www.fundamentus.com.br/resultado.php"
+    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
+    rows = eachmatch(Selector("tbody tr"), parsed.root)
+
+    data = []
+
+    for row in rows
+        tds = eachmatch(Selector("td"), row)
+        values = string.([text(td) for td in tds])
+        push!(
+            data,
+            Dict(
+                "papel" => values[1],
+                "name" => only(eachmatch(Selector("span"), row)).attributes["title"],
+                "cotacao" => _sanitize_float(values[2]),
+                "p/l" => _sanitize_float(values[3]),
+                "p/vp" => _sanitize_float(values[4]),
+                "psr" => _sanitize_float(values[5]),
+                "%_div_yield" => _sanitize_float(values[6], as_percentage = true),
+                "p/ativo" => _sanitize_float(values[7]),
+                "p/cap.giro" => _sanitize_float(values[8]),
+                "p/ebit" => _sanitize_float(values[9]),
+                "p/ativ.circ.liq" => _sanitize_float(values[10]),
+                "ev/ebit" => _sanitize_float(values[11]),
+                "ev/ebitda" => _sanitize_float(values[12]),
+                "marg_ebit" => _sanitize_float(values[13]),
+                "marg_liq" => _sanitize_float(values[14]),
+                "liq_corr" => _sanitize_float(values[15]),
+                "roic" => _sanitize_float(values[16]),
+                "roe" => _sanitize_float(values[17]),
+                "liq_2meses" => _sanitize_float(values[18]),
+                "patrim_liq" => _sanitize_float(values[19]),
+                "div_liq/patrim" => _sanitize_float(values[20]),
+                "cresc_rec_5A" => _sanitize_float(values[21]),
+            )
+        )
+    end
+    return DataFrame(data)
+end
+
+
+"""
     acao_resultados(ticker::AbstractString) :: DataFrame
 
 Fetches the quarterly results of a stock from the **Fundamentus** website.
@@ -25,7 +97,7 @@ function acao_resultados(ticker::AbstractString) :: DataFrame
         push!(
             data,
             Dict(
-                "data" => _parse_date((values[1])),
+                "data" => _parse_date(values[1]),
                 "url_demonstracao" => _extract_link_from_attributes(tds[2]),
                 "url_release" => _extract_link_from_attributes(tds[3]),
             )
@@ -81,7 +153,7 @@ function acao_proventos(ticker::AbstractString) :: DataFrame
             data,
             Dict(
                 "data_com" => _parse_date(values[1]),
-                "valor" => sanitize_float(values[2]),
+                "valor" => _sanitize_float(values[2]),
                 "tipo" => values[3],
                 "data_pag" => values[4] != "-" ? _parse_date((values[4])) : missing,
             )
@@ -191,10 +263,10 @@ function acao_recompras(ticker::AbstractString) :: DataFrame
             data,
             Dict(
                 "data" => _parse_date(values[1]),
-                "quantidade" => sanitize_float(values[2]),
-                "valor" => sanitize_float(values[3]),
+                "quantidade" => _sanitize_float(values[2]),
+                "valor" => _sanitize_float(values[3]),
                 "preco_medio" => values[4],
-                "%_do_capital" => values[5] != "-" ? sanitize_float(values[5]; as_percentage = true) : missing,
+                "%_do_capital" => values[5] != "-" ? _sanitize_float(values[5]; as_percentage = true) : missing,
                 "download_link" => _extract_link_from_attributes(tds[6]),
             )
         )

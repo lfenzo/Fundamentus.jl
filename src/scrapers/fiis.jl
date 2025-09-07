@@ -101,12 +101,12 @@ function fii_imoveis(ticker::AbstractString) :: DataFrame
             Dict(
                 "imovel" => values[1],
                 "endereco" => values[2],
-                "area" => sanitize_float(values[3]),
-                "n_unidades" => sanitize_int(values[4]),
+                "area" => _sanitize_float(values[3]),
+                "n_unidades" => _sanitize_int(values[4]),
                 "caracteristicas" => values[5],
-                "%_ocupacao" => sanitize_float(values[6]; as_percentage = true),
-                "%_inadimplencia" => sanitize_float(values[7]; as_percentage = true),
-                "%_receita" => sanitize_float(values[8]; as_percentage = true),
+                "%_ocupacao" => _sanitize_float(values[6]; as_percentage = true),
+                "%_inadimplencia" => _sanitize_float(values[7]; as_percentage = true),
+                "%_receita" => _sanitize_float(values[8]; as_percentage = true),
             )
         )
     end
@@ -212,8 +212,8 @@ function fii_administrador(ticker::AbstractString) :: DataFrame
 
     df.ticker .= ticker
     df.email .= decode_cfemail(email_hash)
-    df.tx_admin_pl = sanitize_float.(df.tx_admin_pl; as_percentage = true)
-    df.tx_admin_valor_mercado = sanitize_float.(df.tx_admin_valor_mercado; as_percentage = true)
+    df.tx_admin_pl = _sanitize_float.(df.tx_admin_pl; as_percentage = true)
+    df.tx_admin_valor_mercado = _sanitize_float.(df.tx_admin_valor_mercado; as_percentage = true)
 
     return df
 end
@@ -271,7 +271,7 @@ function fii_proventos(ticker::AbstractString) :: DataFrame
                 "data_com" => _parse_date(values[1]),
                 "tipo" => values[2],
                 "data_pag" => _parse_date(values[3]),
-                "valor" => sanitize_float(values[4]),
+                "valor" => _sanitize_float(values[4]),
             )
         )
     end

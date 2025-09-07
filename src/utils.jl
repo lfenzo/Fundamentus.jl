@@ -1,12 +1,14 @@
 const _DEFAULT_DATE_FORMAT = dateformat"dd/mm/yyyy"
 const _DEFAULT_DATETIME_FORMAT = dateformat"dd/mm/yyyy HH:MM"
 
+_clear_cache() = empty!(CACHE)
+
 _sanitize_number_string(s::AbstractString) = replace(s, "." => "", "," => ".", "%" => "")
 _sanitize_date_string(s::AbstractString) = replace(s, r"\s+" => " ") |> strip
 
-sanitize_int(s::AbstractString) = parse(Int, _sanitize_number_string(s))
+_sanitize_int(s::AbstractString) = parse(Int, _sanitize_number_string(s))
 
-function sanitize_float(s::AbstractString; as_percentage::Bool = false) :: Float64
+function _sanitize_float(s::AbstractString; as_percentage::Bool = false) :: Float64
     parsed = parse(Float64, _sanitize_number_string(s))
     return as_percentage ? parsed / 100 : parsed
 end
@@ -60,7 +62,10 @@ function get_html_from_url(; url::String, encoding::String = "UTF-8") :: String
     if url in keys(CACHE)
         decoded = CACHE[url]
     else
-        html_bytes = HTTP.get(url).body
+        headers = [
+            "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+        ]
+        html_bytes = HTTP.get(url, headers = headers).body
         decoded = StringEncodings.decode(html_bytes, encoding)
         CACHE[url] = decoded
     end
