@@ -8,18 +8,18 @@ end
 
 
 @testset "sanitize_int" begin
-    @test Fundamentus.sanitize_int("1000") == 1000
-    @test Fundamentus.sanitize_int("-1.000") == -1000
+    @test Fundamentus._sanitize_int("1000") == 1000
+    @test Fundamentus._sanitize_int("-1.000") == -1000
 end
 
 
 @testset "sanitize_float" begin
-    @test Fundamentus.sanitize_float("1000") == 1000.0
-    @test Fundamentus.sanitize_float("-1.000") == -1000.0
-    @test Fundamentus.sanitize_float("-1.000,00") == -1000.0
-    @test Fundamentus.sanitize_float("1%") == 1.0
-    @test Fundamentus.sanitize_float("1,0%"; as_percentage=true) == 0.01
-    @test Fundamentus.sanitize_float("-5,0%"; as_percentage=true) == -0.05
+    @test Fundamentus._sanitize_float("1000") == 1000.0
+    @test Fundamentus._sanitize_float("-1.000") == -1000.0
+    @test Fundamentus._sanitize_float("-1.000,00") == -1000.0
+    @test Fundamentus._sanitize_float("1%") == 1.0
+    @test Fundamentus._sanitize_float("1,0%"; as_percentage=true) == 0.01
+    @test Fundamentus._sanitize_float("-5,0%"; as_percentage=true) == -0.05
 end
 
 
