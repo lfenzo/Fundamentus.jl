@@ -9,4 +9,5 @@ const acao = "ITUB4"
 
 @testset "acoes" begin
     _test_ticker_against_methods(ticker = acao, methods = fii_methods)
+    _test_valid_dataframe(acoes())
 end

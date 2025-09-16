@@ -1,3 +1,37 @@
+
+function fiis()
+    url = "https://www.fundamentus.com.br/fii_resultado.php"
+    parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
+    rows = eachmatch(Selector("tbody tr"), parsed.root)
+
+    data = []
+
+    for row in rows
+        tds = eachmatch(Selector("td"), row)
+        values = string.([text(td) for td in tds])
+        push!(
+            data,
+            Dict(
+                "papel" => values[1],
+                "name" => only(eachmatch(Selector("span"), row)).attributes["title"],
+                "segmento" => values[2],
+                "cotacao" => _sanitize_float(values[3]),
+                "ffo_yield" => _sanitize_float(values[4], as_percentage = true),
+                "div_yield" => _sanitize_float(values[5], as_percentage = true),
+                "p/vp" => _sanitize_float(values[6]),
+                "market_cap" => _sanitize_float(values[7]),
+                "liq" => _sanitize_int(values[8]),
+                "n_properties" => _sanitize_int(values[9]),
+                "m2_price" => _sanitize_float(values[10]),
+                "m2_rent" => _sanitize_float(values[11]),
+                "cap_rate" => _sanitize_float(values[12], as_percentage = true),
+                "avg_vacancy" => _sanitize_float(values[13], as_percentage = true),
+            )
+        )
+    end
+    return DataFrame(data)
+end
+
 """
     fii_fatos_relevantes(ticker::AbstractString) :: DataFrame
 
