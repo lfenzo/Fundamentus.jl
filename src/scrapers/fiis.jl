@@ -1,31 +1,30 @@
-
 function fiis()
     url = "https://www.fundamentus.com.br/fii_resultado.php"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
 
-    data = []
+    data = NamedTuple[]
 
     for row in rows
         tds = eachmatch(Selector("td"), row)
         values = string.([text(td) for td in tds])
         push!(
             data,
-            Dict(
-                "papel" => values[1],
-                "name" => only(eachmatch(Selector("span"), row)).attributes["title"],
-                "segmento" => values[2],
-                "cotacao" => _sanitize_float(values[3]),
-                "ffo_yield" => _sanitize_float(values[4], as_percentage = true),
-                "div_yield" => _sanitize_float(values[5], as_percentage = true),
-                "p/vp" => _sanitize_float(values[6]),
-                "market_cap" => _sanitize_float(values[7]),
-                "liq" => _sanitize_int(values[8]),
-                "n_properties" => _sanitize_int(values[9]),
-                "m2_price" => _sanitize_float(values[10]),
-                "m2_rent" => _sanitize_float(values[11]),
-                "cap_rate" => _sanitize_float(values[12], as_percentage = true),
-                "avg_vacancy" => _sanitize_float(values[13], as_percentage = true),
+            (
+                papel = values[1],
+                name = only(eachmatch(Selector("span"), row)).attributes["title"],
+                segmento = values[2],
+                cotacao = _sanitize_float(values[3]),
+                ffo_yield = _sanitize_float(values[4], as_percentage = true),
+                div_yield = _sanitize_float(values[5], as_percentage = true),
+                p_vp = _sanitize_float(values[6]),
+                market_cap = _sanitize_float(values[7]),
+                liq = _sanitize_int(values[8]),
+                n_properties = _sanitize_int(values[9]),
+                m2_price = _sanitize_float(values[10]),
+                m2_rent = _sanitize_float(values[11]),
+                cap_rate = _sanitize_float(values[12], as_percentage = true),
+                avg_vacancy = _sanitize_float(values[13], as_percentage = true),
             )
         )
     end
@@ -69,17 +68,17 @@ function fii_fatos_relevantes(ticker::AbstractString) :: DataFrame
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("table#comunicados tbody tr"), parsed.root)
 
-    data = []
+    data = NamedTuple[]
 
     for row in rows
         tds = eachmatch(Selector("td"), row)
         values = string.([text(td) for td in tds])
         push!(
             data,
-            Dict(
-                "data" => _parse_date_time(values[1]),
-                "tipo" => values[2],
-                "download_link" => _extract_link_from_attributes(tds[end]),
+            (
+                data = _parse_date_time(values[1]),
+                tipo = values[2],
+                download_link = _extract_link_from_attributes(tds[end]),
             )
         )
     end
@@ -102,21 +101,22 @@ Retrieve detailed information about the real estate properties held by a Brazili
 - `area` (`Int`): Total area of the property (as reported).
 - `n_unidades` (`Int`): Number of units in the property.
 - `caracteristicas` (`String`): Main characteristics of the property.
-- `%_ocupacao` (`String`): Occupancy rate of the property.
-- `%_inadimplencia` (`String`): Default rate associated with the property.
-- `%_receita` (`String`): Percentage of the fund’s revenue attributed to the property.
+- `perc_ocupacao` (`Float64`): Occupancy rate of the property.
+- `perc_inadimplencia` (`Float64`): Default rate associated with the property.
+- `perc_receita` (`Float64`): Percentage of the fund’s revenue attributed to the property.
 
 # Example
 ```@repl
-7×8 DataFrame
- Row │ endereco                           n_unidades  %_inadimplencia  %_receita  area    %_ocupacao  caracteristicas  imovel                            
-     │ String                             Int64       Float64          Float64    Int64   Float64     String           String                            
-─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 │ Avenida das Indústrias, s/n, CPI…           1           0.0        0.0957  132353      1.0     -                HGLG Vinhedo
-   2 │ Avenida Piracema, nº 155, quadra…           1           0.0        0.0812   90484      1.0     -                DCB - Distribuition Center Barue…
-   3 │ Rodovia Anhanguera, km 31.775, C…           1           0.0        0.0653  102708      0.9405  -                DCC - Distribuition Center Cajam…
-   4 │ Av. Hélio Ossamu Daikuara, nº 1.…           1           0.0        0.0503   77587      0.8997  -                DCR - Distribuition Center Rodoa…
-   5 │ Estrada Joaquim Bueno Neto, 9835…           1           0.0        0.0474   89976      1.0     -                HGLG Itupeva G200
+julia> fii_imoveis("HGLG11")
+27×8 DataFrame
+ Row │ imovel                             endereco                           area      n_unidades  caracteristicas  perc_ocupacao  perc_inadimplencia  perc_receita 
+     │ String                             String                             Float64   Int64       String           Float64        Float64             Float64      
+─────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ DCB - Distribuition Center Barue…  Avenida Piracema, nº 155, quadra…   90484.0           1  -                       1.0                    0.0        0.0795
+   2 │ HGLG Vinhedo                       Avenida das Indústrias, s/n, CPI…  132353.0           1  -                       1.0                    0.0        0.0703
+   3 │ DCC - Distribuition Center Cajam…  Rodovia Anhanguera, km 31.775, C…  102708.0           1  -                       1.0                    0.0        0.0532
+   4 │ HGLG Itupeva G200                  Estrada Joaquim Bueno Neto, 9835…   89976.0           1  -                       1.0                    0.0        0.0444
+   5 │ HGLG São Carlos                    Rodovia Eng. Thales de Lorena Pe…   79642.0           1  -                       1.0                    0.0        0.0402
 ...
 ```
 """
@@ -125,22 +125,22 @@ function fii_imoveis(ticker::AbstractString) :: DataFrame
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
 
-    data = []
+    data = NamedTuple[]
 
     for row in rows
         tds = eachmatch(Selector("td"), row)
         values = string.([text(td) for td in tds])
         push!(
             data,
-            Dict(
-                "imovel" => values[1],
-                "endereco" => values[2],
-                "area" => _sanitize_float(values[3]),
-                "n_unidades" => _sanitize_int(values[4]),
-                "caracteristicas" => values[5],
-                "%_ocupacao" => _sanitize_float(values[6]; as_percentage = true),
-                "%_inadimplencia" => _sanitize_float(values[7]; as_percentage = true),
-                "%_receita" => _sanitize_float(values[8]; as_percentage = true),
+            (
+                imovel = values[1],
+                endereco = values[2],
+                area = _sanitize_float(values[3]),
+                n_unidades = _sanitize_int(values[4]),
+                caracteristicas = values[5],
+                perc_ocupacao = _sanitize_float(values[6]; as_percentage = true),
+                perc_inadimplencia = _sanitize_float(values[7]; as_percentage = true),
+                perc_receita = _sanitize_float(values[8]; as_percentage = true),
             )
         )
     end
@@ -181,16 +181,16 @@ function fii_relatorios(ticker::AbstractString) :: DataFrame
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
 
-    data = []
+    data = NamedTuple[]
 
     for row in rows
         tds = eachmatch(Selector("td"), row)
         values = string.([text(td) for td in tds])
         push!(
             data,
-            Dict(
-                "data" => _parse_date(values[1], format = dateformat"mm/yyyy"),
-                "download_link" => _extract_link_from_attributes(tds[2]),
+            (
+                data = _parse_date(values[1], format = dateformat"mm/yyyy"),
+                download_link = _extract_link_from_attributes(tds[2]),
             )
         )
     end
@@ -295,17 +295,17 @@ function fii_proventos(ticker::AbstractString) :: DataFrame
     url = "https://www.fundamentus.com.br/fii_proventos.php?papel=$ticker&tipo=2"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
     rows = eachmatch(Selector("tbody tr"), parsed.root)
-    data = []
+    data = NamedTuple[]
 
     for row in rows
         values = string.([text(td) for td in eachmatch(Selector("td"), row)])
         push!(
             data,
-            Dict(
-                "data_com" => _parse_date(values[1]),
-                "tipo" => values[2],
-                "data_pag" => _parse_date(values[3]),
-                "valor" => _sanitize_float(values[4]),
+            (
+                data_com = _parse_date(values[1]),
+                tipo = values[2],
+                data_pag = _parse_date(values[3]),
+                valor = _sanitize_float(values[4]),
             )
         )
     end
