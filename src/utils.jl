@@ -1,5 +1,6 @@
 const _DEFAULT_DATE_FORMAT = dateformat"dd/mm/yyyy"
 const _DEFAULT_DATETIME_FORMAT = dateformat"dd/mm/yyyy HH:MM"
+using HTTP: cookies
 
 const HEADERS = Pair{String, String}[
     "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
@@ -70,7 +71,9 @@ function get_html_from_url(; url::String, encoding::String = "UTF-8") :: String
     if url in keys(CACHE)
         decoded = CACHE[url]
     else
-        html_bytes = HTTP.get(url, headers = HEADERS).body
+        jar = HTTP.Cookies.CookieJar()
+        _ = HTTP.get("https://fundamentus.com.br/", cookies=jar, headers=HEADERS)
+        html_bytes = HTTP.get(url, headers=HEADERS, cookies=jar).body
         decoded = StringEncodings.decode(html_bytes, encoding)
         CACHE[url] = decoded
     end

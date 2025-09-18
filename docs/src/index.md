@@ -3,7 +3,7 @@
 Fundamentus.jl is a Julia package that provides programmatic access to Brazilian stock market data from the [Fundamentus website](https://www.fundamentus.com.br/).
 Data includes fundamental indicators, dividend history, performance metrics, press releases, etc.
 
-Data is retrieved and returned as [DataFrame]() objects, for convenient analysis and manipulation in Julia. Repeated queries are automatically cached to improve performance.
+Data is retrieved and returned as [DataFrame](https://github.com/JuliaData/DataFrames.jl) objects, for convenient analysis and manipulation in Julia. Repeated queries are automatically cached to improve performance.
 
 ## Installation
 
@@ -29,4 +29,5 @@ first(acao_proventos("ITUB4"), 5)  # Fetch dividend history for ITUB4
 
 !!! note
     Function and column names are kept in Portuguese to remain consistent with the terminology used on the Fundamentus website.
-    All documentation and usage examples, however, are provided in English.
+    All documentation and usage examples, however, are provided in English. This may change in the
+    future depending on feedback.
