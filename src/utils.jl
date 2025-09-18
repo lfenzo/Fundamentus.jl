@@ -1,6 +1,14 @@
 const _DEFAULT_DATE_FORMAT = dateformat"dd/mm/yyyy"
 const _DEFAULT_DATETIME_FORMAT = dateformat"dd/mm/yyyy HH:MM"
 
+const HEADERS = Pair{String, String}[
+    "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "Accept-Language" => "en-US,en;q=0.9",
+    "Connection" => "keep-alive",
+    "Upgrade-Insecure-Requests" => "1",
+]
+
+
 _clear_cache() = empty!(CACHE)
 
 _sanitize_number_string(s::AbstractString) = replace(s, "." => "", "," => ".", "%" => "")
@@ -62,10 +70,7 @@ function get_html_from_url(; url::String, encoding::String = "UTF-8") :: String
     if url in keys(CACHE)
         decoded = CACHE[url]
     else
-        headers = [
-            "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-        ]
-        html_bytes = HTTP.get(url, headers = headers).body
+        html_bytes = HTTP.get(url, headers = HEADERS).body
         decoded = StringEncodings.decode(html_bytes, encoding)
         CACHE[url] = decoded
     end
