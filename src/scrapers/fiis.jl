@@ -1,3 +1,40 @@
+"""
+    fiis() :: DataFrame
+
+Retrieve the full list of Brazilian FIIs (Real Estate Investment Funds) available
+on Fundamentus, including market, financial, and operational indicators.
+
+# Returns
+`DataFrame` with the following columns:
+- `papel` (`String`): Ticker symbol of the FII (e.g., `"HGLG11"`).
+- `name` (`String`): Full name of the FII.
+- `segmento` (`String`): Market segment or category of the FII.
+- `cotacao` (`Float64`): Latest share price (quotation).
+- `ffo_yield` (`Float64`): Funds from Operations (FFO) yield (%).
+- `div_yield` (`Float64`): Dividend yield (%).
+- `p_vp` (`Float64`): Price-to-book ratio (P/VP).
+- `market_cap` (`Float64`): Market capitalization in BRL.
+- `liq` (`Int64`): Average daily liquidity (traded volume).
+- `n_properties` (`Int64`): Number of properties in the portfolio.
+- `m2_price` (`Float64`): Price per square meter (BRL/m²).
+- `m2_rent` (`Float64`): Rent per square meter (BRL/m²).
+- `cap_rate` (`Float64`): Capitalization rate (%).
+- `avg_vacancy` (`Float64`): Average vacancy rate (%).
+
+# Example
+```@repl
+528×14 DataFrame
+ Row │ papel   name                               segmento             cotacao   ffo_yield  div_yield  p_vp     market_cap  liq       n_properties  m2_price  m2_rent  cap_rate  avg_vacancy 
+     │ String  String                             String               Float64   Float64    Float64    Float64  Float64     Int64     Int64         Float64   Float64  Float64   Float64     
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ AAZQ11  AZ QUEST SOLE FUNDO DE INVESTIME…  Outros                   7.59     0.1381     0.1589     0.88  1.82443e8     429454             0      0.0      0.0     0.0          0.0
+   2 │ ABCP11  GRAND PLAZA SHOPPING FUNDO DE IN…  Shoppings               81.0      0.0979     0.0936     0.76  3.81436e8      86043             1   5354.89   655.94    0.1225       0.0268
+   3 │ AEFI11  FUNDO DE INVESTIMENTO IMOBILIÁRI…  Outros                 174.9      0.0855     0.0        1.75  4.11893e8          0             0      0.0      0.0     0.0          0.0
+   4 │ AFCR11  CARTESIA RECEBÍVEIS IMOBILIÁRIOS…  Multicategoria         103.15     0.1261     0.0        1.07  4.98867e8          0             0      0.0      0.0     0.0          0.0
+   5 │ AFHF11  AF INVEST REAL ESTATE MULTIESTRA…  Outros                  10.08     0.0        0.0245     1.0   5.04e7         92574             0      0.0      0.0     0.0          0.0
+...
+```
+"""
 function fiis()
     url = "https://www.fundamentus.com.br/fii_resultado.php"
     parsed = get_html_from_url(url=url, encoding="ISO-8859-1") |> parsehtml
