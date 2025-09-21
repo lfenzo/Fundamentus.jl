@@ -13,3 +13,6 @@ StringEncodings = "69024149-9ee7-55f6-a4c4-859efe599b68"
 [compat]
 Cascadia = "1"
 StringEncodings = "0.3.7"
+DataFrames = "1"
+Gumbo = "0.8"
+HTTP = "1"
